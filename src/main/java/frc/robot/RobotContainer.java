@@ -5,14 +5,12 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.commands.ArcadeDrive;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.XRPDrivetrain;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.Constants;
-
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
@@ -25,11 +23,10 @@ public class RobotContainer {
 
   private final ExampleCommand m_autoCommand = new ExampleCommand(m_xrpDrivetrain);
 
-  private CommandXboxController m_xboxController;
+  private final CommandXboxController m_mainDriverController = new CommandXboxController(Constants.XboxControllerPort);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    m_xboxController = new CommandXboxController(Constants.XboxControllerPort);
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -41,7 +38,9 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    m_xboxController.a().whileTrue(new InstantCommand(() -> m_xrpDrivetrain.arcadeDrive(0.2, 1)));
+    m_xrpDrivetrain.setDefaultCommand(moveOnJoystick());
+    m_mainDriverController.b().whileTrue(Commands.run(() -> m_xrpDrivetrain.arcadeDrive(-0.5, 0), m_xrpDrivetrain));
+    m_mainDriverController.a().whileTrue(Commands.run(() -> m_xrpDrivetrain.arcadeDrive(0.5, 0), m_xrpDrivetrain));
   }
 
   /**
@@ -49,6 +48,11 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
+
+  public Command moveOnJoystick() {
+    return new ArcadeDrive(m_xrpDrivetrain, () -> -m_mainDriverController.getRawAxis(1), () -> -1*m_mainDriverController.getRawAxis(0));
+  }
+
   public Command getAutonomousCommand() {
     // An ExampleCommand will run in autonomous
     return m_autoCommand;

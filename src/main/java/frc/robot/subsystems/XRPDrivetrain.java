@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.xrp.XRPMotor;
@@ -15,6 +17,10 @@ public class XRPDrivetrain extends SubsystemBase {
   private static final double kCountsPerMotorShaftRev = 12.0;
   private static final double kCountsPerRevolution = kCountsPerMotorShaftRev * kGearRatio; // 585.0
   private static final double kWheelDiameterInch = 2.3622; // 60 mm
+  public PIDController pidL = new PIDController(0, 0, 0);
+  public PIDController pidR = new PIDController(0, 0, 0);
+  public SimpleMotorFeedforward m_motorL = new SimpleMotorFeedforward(0.3, 0.3);
+  public SimpleMotorFeedforward m_motorR = new SimpleMotorFeedforward(0.3, 0.3);
 
   // The XRP has the left and right motors set to
   // channels 0 and 1 respectively
@@ -28,7 +34,7 @@ public class XRPDrivetrain extends SubsystemBase {
 
   // Set up the differential drive controller
   private final DifferentialDrive m_diffDrive =
-      new DifferentialDrive(m_leftMotor::set, m_rightMotor::set);
+      new DifferentialDrive(this::setLeftMotor, this::setRightMotor);
 
   /** Creates a new XRPDrivetrain. */
   public XRPDrivetrain() {
@@ -58,6 +64,16 @@ public class XRPDrivetrain extends SubsystemBase {
     return m_rightEncoder.getDistance();
   }
 
+  public void setLeftMotor(double speed) {
+    speed = m_motorL.calculate(speed + pidL.calculate(m_leftEncoder.getRate(), speed));
+    m_leftMotor.set(speed);
+  }
+
+  public void setRightMotor(double speed) {
+    speed = m_motorR.calculate(speed + pidR.calculate(m_rightEncoder.getRate(), speed));
+    m_rightMotor.set(speed);
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
@@ -65,6 +81,5 @@ public class XRPDrivetrain extends SubsystemBase {
 
   @Override
   public void simulationPeriodic() {
-    // This method will be called once per scheduler run during simulation
   }
 }
